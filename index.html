@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Management System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="header">
+        Hotel Management System
+    </div>
+    <div class="container">
+        <div class="sidebar">
+            <button onclick="showSection('manageHotels')">Manage Hotels</button>
+            <button onclick="showSection('manageUsers')">Manage Users</button>
+            <button onclick="showSection('filterHotels')">Filter Hotels</button>
+            <button onclick="showSection('bookHotel')">Book Hotel</button>
+            <button onclick="showSection('userBookings')">User Bookings</button>
+        </div>
+        <div class="main-content">
+            <div id="manageHotels" class="section">
+                <h2>Manage Hotels</h2>
+                <label for="hotelId">Hotel ID:</label>
+                <input type="number" id="hotelId"><br>
+                <label for="hotelName">Hotel Name:</label>
+                <input type="text" id="hotelName"><br>
+                <label for="hotelLocation">Hotel Location:</label>
+                <input type="text" id="hotelLocation"><br>
+                <label for="hotelRooms">Rooms Available:</label>
+                <input type="number" id="hotelRooms"><br>
+                <label for="hotelPrice">Price per Night:</label>
+                <input type="number" step="0.01" id="hotelPrice"><br>
+                <button onclick="addHotel()">Add Hotel</button>
+                <table id="hotelsTable">
+                    <thead>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div id="manageUsers" class="section">
+                <h2>Manage Users</h2>
+                <label for="userId">User ID:</label>
+                <input type="number" id="userId"><br>
+                <label for="userName">User Name:</label>
+                <input type="text" id="userName"><br>
+                <button onclick="addUser()">Add User</button>
+                <button onclick="displayAllHotels()">Display All Hotels</button>
+                <table id="allHotelsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Location</th>
+                            <th>Rooms</th>
+                            <th>Price</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div id="filterHotels" class="section">
+                <h2>Filter Hotels</h2>
+                <label for="filterLocation">Filter by Location:</label>
+                <input type="text" id="filterLocation"><br>
+                <button onclick="filterHotelsByLocation()">Filter Hotels</button>
+                <table id="filteredHotelsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Location</th>
+                            <th>Rooms</th>
+                            <th>Price</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div id="bookHotel" class="section">
+                <h2>Book Hotel</h2>
+                <label for="bookingUserId">User ID:</label>
+                <input type="number" id="bookingUserId"><br>
+                <label for="bookingHotelId">Hotel ID:</label>
+                <input type="number" id="bookingHotelId"><br>
+                <button onclick="bookHotel()">Book Hotel</button>
+            </div>
+            <div id="userBookings" class="section">
+                <h2>User Bookings</h2>
+                <label for="displayUserId">User ID:</label>
+                <input type="number" id="displayUserId"><br>
+                <button onclick="displayUserBookings()">Display Bookings</button>
+                <table id="userBookingsTable">
+                    <thead>
+                        <tr>
+                            <th>Hotel Name</th>
+                            <th>Location</th>
+                            <th>Price per Night</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script>
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+        }
+
+        function addHotel() {
+            const hotelId = parseInt(document.getElementById('hotelId').value);
+            const name = document.getElementById('hotelName').value;
+            const location = document.getElementById('hotelLocation').value;
+            const roomsAvailable = parseInt(document.getElementById('hotelRooms').value);
+            const pricePerNight = parseFloat(document.getElementById('hotelPrice').value);
+            if (!isNaN(hotelId) && name && location && !isNaN(roomsAvailable) && !isNaN(pricePerNight)) {
+                fetch('/add_hotel', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        hotelId: hotelId,
+                        name: name,
+                        location: location,
+                        roomsAvailable: roomsAvailable,
+                        pricePerNight: pricePerNight
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert("Hotel added successfully!");
+                        clearHotelForm();
+                    } else {
+                        alert("Failed to add hotel.");
+                    }
+                });
+            } else {
+                alert("Please enter valid hotel details.");
+            }
+        }
+
+        function addUser() {
+            const userId = parseInt(document.getElementById('userId').value);
+            const name = document.getElementById('userName').value;
+            if (!isNaN(userId) && name) {
+                fetch('/add_user', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        name: name
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert("User added successfully!");
+                        clearUserForm();
+                    } else {
+                        alert("Failed to add user.");
+                    }
+                });
+            } else {
+                alert("Please enter valid user details.");
+            }
+        }
+
+        function clearHotelForm() {
+            document.getElementById('hotelId').value = '';
+            document.getElementById('hotelName').value = '';
+            document.getElementById('hotelLocation').value = '';
+            document.getElementById('hotelRooms').value = '';
+            document.getElementById('hotelPrice').value = '';
+        }
+
+        function clearUserForm() {
+            document.getElementById('userId').value = '';
+            document.getElementById('userName').value = '';
+        }
+
+        function displayAllHotels() {
+            fetch('/all_hotels')
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.querySelector('#allHotelsTable tbody');
+                    tableBody.innerHTML = '';
+                    data.forEach(hotel => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${hotel.hotelId}</td>
+                            <td>${hotel.name}</td>
+                            <td>${hotel.location}</td>
+                            <td>${hotel.roomsAvailable}</td>
+                            <td>${hotel.pricePerNight}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                });
+        }
+
+        function filterHotelsByLocation() {
+            const location = document.getElementById('filterLocation').value;
+            fetch(`/filter_hotels?location=${location}`)
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.querySelector('#filteredHotelsTable tbody');
+                    tableBody.innerHTML = '';
+                    data.forEach(hotel => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${hotel.hotelId}</td>
+                            <td>${hotel.name}</td>
+                            <td>${hotel.location}</td>
+                            <td>${hotel.roomsAvailable}</td>
+                            <td>${hotel.pricePerNight}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                });
+        }
+
+        function bookHotel() {
+            const userId = parseInt(document.getElementById('bookingUserId').value);
+            const hotelId = parseInt(document.getElementById('bookingHotelId').value);
+            fetch('/book_hotel', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    userId: userId,
+                    hotelId: hotelId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert("Hotel booked successfully!");
+                } else {
+                    alert("Failed to book hotel. Please check the details and try again.");
+                }
+            });
+        }
+
+        function displayUserBookings() {
+            const userId = parseInt(document.getElementById('displayUserId').value);
+            fetch(`/user_bookings?userId=${userId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.querySelector('#userBookingsTable tbody');
+                    tableBody.innerHTML = '';
+                    if (data.length > 0) {
+                        data.forEach(booking => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${booking.name}</td>
+                                <td>${booking.location}</td>
+                                <td>${booking.pricePerNight}</td>
+                            `;
+                            tableBody.appendChild(row);
+                        });
+                    } else {
+                        alert("No bookings found for this user.");
+                    }
+                });
+        }
+    </script>
+</body>
+</html>
